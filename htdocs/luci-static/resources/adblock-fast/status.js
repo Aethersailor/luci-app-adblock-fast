@@ -12,7 +12,7 @@ var pkg = {
 		return "adblock-fast";
 	},
 	get LuciCompat() {
-		return 11;
+		return 12;
 	},
 	get ReadmeCompat() {
 		return "";
