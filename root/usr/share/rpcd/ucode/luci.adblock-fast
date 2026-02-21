@@ -21,7 +21,7 @@ import { readfile, writefile, stat, popen } from 'fs';
 import { cursor } from 'uci';
 
 const packageName = 'adblock-fast';
-const rpcdCompat = 12; // ucode-lsp disable
+const rpcdCompat = 13; // ucode-lsp disable
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -157,6 +157,7 @@ function get_cron_status(req) {
 	let line_count = 0, match_count = 0;
 	let active_seen = false, suspended_seen = false, disabled_seen = false;
 	let last_line_state = '';
+	let matched_entry = '';
 
 	let content = readfile(cron_file) || '';
 	let pattern = sprintf('/etc/init.d/%s\\s+dl', packageName);
@@ -171,6 +172,7 @@ function get_cron_status(req) {
 		if (!match(line_content, re)) continue;
 
 		line_count++;
+		matched_entry = line;
 		let state;
 		if (index(line, 'adblock-fast-auto-disabled') >= 0) {
 			state = 'disabled';
@@ -286,6 +288,7 @@ function get_cron_status(req) {
 		cron_line_multi: cron_multi,
 		cron_line_parse_ok: cron_parse_ok,
 		cron_line_state: cron_state,
+		entry: matched_entry,
 	};
 	return result;
 }

@@ -12,7 +12,7 @@ var pkg = {
 		return "adblock-fast";
 	},
 	get LuciCompat() {
-		return 12;
+		return 13;
 	},
 	get ReadmeCompat() {
 		return "";
@@ -315,11 +315,11 @@ var status = baseclass.extend({
 	render: function () {
 		return Promise.all([
 			L.resolveDefault(getInitStatus(pkg.Name), {}),
-			L.resolveDefault(getServiceInfo(pkg.Name, true), {}),
 			L.resolveDefault(getCronStatus(pkg.Name), {}),
-		]).then(function ([initStatus, ubusInfo, cronStatus]) {
+		]).then(function ([initStatus, cronStatus]) {
+			var initData = initStatus?.[pkg.Name] || {};
 			var reply = {
-				status: initStatus?.[pkg.Name] || {
+				status: initData.enabled !== undefined ? initData : {
 					enabled: false,
 					status: null,
 					packageCompat: 0,
@@ -340,10 +340,10 @@ var status = baseclass.extend({
 					outputGzipExists: null,
 					leds: [],
 				},
-				ubus: ubusInfo?.[pkg.Name]?.instances?.main?.data || {
-					packageCompat: 0,
-					errors: [],
-					warnings: [],
+				ubus: {
+					packageCompat: initData.packageCompat || 0,
+					errors: initData.errors ? [...initData.errors] : [],
+					warnings: initData.warnings ? [...initData.warnings] : [],
 				},
 				cron: cronStatus?.[pkg.Name] || {
 					auto_update_enabled: false,
