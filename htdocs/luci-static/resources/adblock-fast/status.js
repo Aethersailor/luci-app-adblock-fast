@@ -319,27 +319,30 @@ var status = baseclass.extend({
 		]).then(function ([initStatus, cronStatus]) {
 			var initData = initStatus?.[pkg.Name] || {};
 			var reply = {
-				status: initData.enabled !== undefined ? initData : {
-					enabled: false,
-					status: null,
-					packageCompat: 0,
-					rpcdCompat: 0,
-					running: null,
-					version: null,
-					errors: [],
-					warnings: [],
-					force_dns_active: null,
-					force_dns_ports: [],
-					entries: null,
-					dns: null,
-					outputFile: null,
-					outputCache: null,
-					outputGzip: null,
-					outputFileExists: null,
-					outputCacheExists: null,
-					outputGzipExists: null,
-					leds: [],
-				},
+				status:
+					initData.enabled !== undefined
+						? initData
+						: {
+								enabled: false,
+								status: null,
+								packageCompat: 0,
+								rpcdCompat: 0,
+								running: null,
+								version: null,
+								errors: [],
+								warnings: [],
+								force_dns_active: null,
+								force_dns_ports: [],
+								entries: null,
+								dns: null,
+								outputFile: null,
+								outputCache: null,
+								outputGzip: null,
+								outputFileExists: null,
+								outputCacheExists: null,
+								outputGzipExists: null,
+								leds: [],
+							},
 				ubus: {
 					packageCompat: initData.packageCompat || 0,
 					errors: initData.errors ? [...initData.errors] : [],
@@ -445,31 +448,6 @@ var status = baseclass.extend({
 				switch (reply.status.status) {
 					case "statusSuccess":
 						text += pkg.statusTable[reply.status.status] + ".";
-						text +=
-							"<br />" +
-							_("Blocking %s domains (with %s).").format(
-								reply.status.entries,
-								reply.status.dns,
-							);
-						if (reply.status.outputGzipExists) {
-							text += "<br />" + _("Compressed cache file created.");
-						}
-						if (reply.status.force_dns_active) {
-							text += "<br />" + _("Force DNS ports:");
-							reply.status.force_dns_ports.forEach((element) => {
-								text += " " + element;
-							});
-							text += ".";
-						}
-						text +=
-							"<br />" +
-							"<br />" +
-							_(
-								"Please %sdonate%s to support development of this project.",
-							).format(
-								"<a href='" + pkg.DonateURL + "' target='_blank'>",
-								"</a>",
-							);
 						break;
 					case "statusStopped":
 						if (reply.status.enabled) {
@@ -480,11 +458,6 @@ var status = baseclass.extend({
 								" (" +
 								_("Disabled") +
 								").";
-						}
-						if (reply.status.outputCacheExists) {
-							text += "<br />" + _("Cache file found.");
-						} else if (reply.status.outputGzipExists) {
-							text += "<br />" + _("Compressed cache file found.");
 						}
 						break;
 					case "statusRestarting":
@@ -506,6 +479,62 @@ var status = baseclass.extend({
 				statusTitle,
 				statusField,
 			]);
+
+			var detailsDiv = [];
+			if (reply.status.version) {
+				var detailsText = "";
+				if (reply.status.status === "statusSuccess") {
+					detailsText += _("Blocking %s domains (with %s).").format(
+						reply.status.entries,
+						reply.status.dns,
+					);
+					if (reply.status.outputGzipExists) {
+						detailsText += "<br />" + _("Compressed cache file created.");
+					}
+					if (reply.status.force_dns_active) {
+						detailsText += "<br />" + _("Force DNS ports:");
+						reply.status.force_dns_ports.forEach((element) => {
+							detailsText += " " + element;
+						});
+						detailsText += ".";
+					}
+				}
+				if (reply.status.status === "statusStopped") {
+					if (reply.status.outputCacheExists) {
+						detailsText += _("Cache file found.");
+					} else if (reply.status.outputGzipExists) {
+						detailsText += _("Compressed cache file found.");
+					}
+				}
+				if (detailsText) {
+					var detailsTitle = E(
+						"label",
+						{ class: "cbi-value-title" },
+						_("Service Details"),
+					);
+					var detailsDescr = E(
+						"div",
+						{ class: "cbi-value-description" },
+						_(
+							"Please %sdonate%s to support development of this project.",
+						).format(
+							"<a href='" + pkg.DonateURL + "' target='_blank'>",
+							"</a>",
+						),
+					);
+					var detailsContent = E("div", {}, detailsText);
+					var detailsField = E("div", { class: "cbi-value-field" }, [
+						detailsContent,
+						E("br"),
+						E("br"),
+						detailsDescr,
+					]);
+					detailsDiv = E("div", { class: "cbi-value" }, [
+						detailsTitle,
+						detailsField,
+					]);
+				}
+			}
 
 			var warningsDiv = [];
 			if (reply.ubus.warnings && reply.ubus.warnings.length) {
@@ -621,8 +650,8 @@ var status = baseclass.extend({
 						ui.showModal(null, [
 							E("p", { class: "spinning" }, _("Syncing cron schedule")),
 						]);
-						return L.resolveDefault(getCronEntry(pkg.Name), {}).then(
-							function (response) {
+						return L.resolveDefault(getCronEntry(pkg.Name), {})
+							.then(function (response) {
 								var entry =
 									(response?.[pkg.Name] && response[pkg.Name].entry) || "";
 								if (!entry) {
@@ -636,23 +665,23 @@ var status = baseclass.extend({
 								return L.resolveDefault(setCronEntry(pkg.Name, entry), {
 									result: false,
 								});
-							},
-						).then(
-							function (result) {
-								if (!result || result.result === false) {
-									throw new Error("Failed to update cron schedule");
-								}
-								ui.hideModal();
-								location.reload();
-							},
-							function (error) {
-								ui.hideModal();
-								ui.addNotification(
-									null,
-									E("p", {}, _("Failed to sync cron schedule")),
-								);
-							},
-						);
+							})
+							.then(
+								function (result) {
+									if (!result || result.result === false) {
+										throw new Error("Failed to update cron schedule");
+									}
+									ui.hideModal();
+									location.reload();
+								},
+								function (error) {
+									ui.hideModal();
+									ui.addNotification(
+										null,
+										E("p", {}, _("Failed to sync cron schedule")),
+									);
+								},
+							);
 					},
 				},
 				_("Resync Cron"),
@@ -803,6 +832,7 @@ var status = baseclass.extend({
 			return E("div", {}, [
 				header,
 				statusDiv,
+				detailsDiv,
 				warningsDiv,
 				errorsDiv,
 				buttonsDiv,
