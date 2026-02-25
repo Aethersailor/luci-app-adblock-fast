@@ -3,6 +3,7 @@
 "require form";
 "require baseclass";
 "require adblock-fast.status as adb";
+/* globals adb */
 
 const { pkg } = adb;
 

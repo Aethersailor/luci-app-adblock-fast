@@ -543,7 +543,7 @@ var status = baseclass.extend({
 					{ class: "cbi-value-title" },
 					_("Service Warnings"),
 				);
-				var text = "";
+				text = "";
 				reply.ubus.warnings.forEach((element) => {
 					if (element.code && pkg.warningTable[element.code]) {
 						text += pkg.formatMessage(
@@ -573,7 +573,7 @@ var status = baseclass.extend({
 					{ class: "cbi-value-title" },
 					_("Service Errors"),
 				);
-				var text = "";
+				text = "";
 				reply.ubus.errors.forEach((element) => {
 					if (element.code && pkg.errorTable[element.code]) {
 						text += pkg.formatMessage(
