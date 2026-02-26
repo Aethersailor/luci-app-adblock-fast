@@ -17,21 +17,13 @@ ubus call luci.adblock-fast syncCron '{"name":"adblock-fast","action":"start"}'
 */
 
 import adb from '/lib/adblock-fast/adblock-fast.uc';
-import { readfile, writefile, stat, popen, rename, unlink, chmod, mkdir, access } from 'fs';
+import { readfile, writefile, stat, rename, unlink, chmod, mkdir, access } from 'fs';
 import { cursor } from 'uci';
 
 const packageName = 'adblock-fast';
 const rpcdCompat = 13; // ucode-lsp disable
 
 // ── Helpers ─────────────────────────────────────────────────────────
-
-function cmd_output(c) {
-	let p = popen(c, 'r');
-	if (!p) return '';
-	let out = p.read('all') || '';
-	p.close();
-	return out;
-}
 
 function uci_bool(val) {
 	if (val == null) return false;
@@ -41,10 +33,6 @@ function uci_bool(val) {
 	default:
 		return false;
 	}
-}
-
-function uci_has_changes(config) {
-	return trim(cmd_output(sprintf("uci changes '%s' 2>/dev/null", config))) != '';
 }
 
 // ── Cron Management ─────────────────────────────────────────────────
@@ -272,7 +260,7 @@ function get_cron_status(req) {
 	}
 
 	cron_uci.set(packageName, 'config', 'auto_update_enabled', auto_enabled ? '1' : '0');
-	if (uci_has_changes(packageName)) cron_uci.commit(packageName);
+	if (length(cron_uci.changes(packageName))) cron_uci.commit(packageName);
 
 	let result = {};
 	result[name] = {
