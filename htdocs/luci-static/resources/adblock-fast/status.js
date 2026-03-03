@@ -51,6 +51,14 @@ var pkg = {
 	isObjEmpty: function (obj) {
 		return Object.keys(obj).length === 0;
 	},
+	formatPauseTimeout: function (seconds) {
+		var s = parseInt(seconds) || 20;
+		if (s < 60) return s + "s";
+		var m = Math.floor(s / 60);
+		var rem = s % 60;
+		if (rem === 0) return m + "m";
+		return m + "m " + rem + "s";
+	},
 
 	statusTable: {
 		statusNoInstall: _("%s is not installed or not found").format(
@@ -687,6 +695,7 @@ var status = baseclass.extend({
 				_("Resync Cron"),
 			);
 
+			var pauseTimeout = reply.status.pause_timeout || "20";
 			var btn_action_pause = E(
 				"button",
 				{
@@ -699,7 +708,7 @@ var status = baseclass.extend({
 						return RPC.setInitAction(pkg.Name, "pause");
 					},
 				},
-				_("Pause"),
+				_("Pause") + " (" + pkg.formatPauseTimeout(pauseTimeout) + ")",
 			);
 
 			var btn_stop = E(
@@ -805,8 +814,8 @@ var status = baseclass.extend({
 			var buttonsTextItems = [
 				btn_start,
 				btn_gap,
-				// btn_action_pause,
-				// btn_gap,
+				btn_action_pause,
+				btn_gap,
 				btn_action_dl,
 			];
 			if (cronSyncNeeded) {
