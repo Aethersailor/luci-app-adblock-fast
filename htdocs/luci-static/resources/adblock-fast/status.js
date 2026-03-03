@@ -604,20 +604,55 @@ var status = baseclass.extend({
 				_("Redownload"),
 			);
 
-			var pauseTimeout = reply.status.pause_timeout || "20";
+			var pauseTimeout = parseInt(reply.status.pause_timeout) || 20;
+			var pauseLabel =
+				_("Pause") + " (" + pkg.formatPauseTimeout(pauseTimeout) + ")";
 			var btn_action_pause = E(
 				"button",
 				{
 					class: "btn cbi-button cbi-button-apply",
 					disabled: true,
 					click: function (ev) {
-						ui.showModal(null, [
-							E("p", { class: "spinning" }, _("Pausing %s").format(pkg.Name)),
-						]);
-						return RPC.setInitAction(pkg.Name, "pause");
+						var remaining = pauseTimeout;
+						var allButtons = [
+							btn_start,
+							btn_action_dl,
+							btn_action_pause,
+							btn_stop,
+							btn_enable,
+							btn_disable,
+						];
+						if (typeof btn_sync_cron !== "undefined")
+							allButtons.push(btn_sync_cron);
+						allButtons.forEach(function (b) {
+							b.disabled = true;
+						});
+						btn_action_pause.textContent =
+							_("Pause") +
+							" (" +
+							pkg.formatPauseTimeout(remaining) +
+							")";
+						RPC.setInitAction(pkg.Name, "pause");
+						var countdown = setInterval(function () {
+							remaining--;
+							if (remaining > 0) {
+								btn_action_pause.textContent =
+									_("Pause") +
+									" (" +
+									pkg.formatPauseTimeout(remaining) +
+									")";
+							} else {
+								clearInterval(countdown);
+								btn_action_pause.textContent =
+									_("Pause") + " (" + _("Restarting") + "…)";
+								pollServiceStatus(function () {
+									location.reload();
+								});
+							}
+						}, 1000);
 					},
 				},
-				_("Pause") + " (" + pkg.formatPauseTimeout(pauseTimeout) + ")",
+				pauseLabel,
 			);
 
 			var btn_stop = E(
