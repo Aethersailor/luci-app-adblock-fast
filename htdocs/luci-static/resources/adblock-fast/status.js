@@ -107,12 +107,6 @@ var pkg = {
 		warningCronMissing: _(
 			"Cron daemon is not available. If BusyBox crond is present, enable it with: %s; otherwise install another cron daemon.",
 		),
-		warningCronEntryMissing: _(
-			"Cron entry is missing; click %s to recreate it.",
-		),
-		warningCronEntryMismatch: _(
-			"Cron entry does not match the schedule; click %s to overwrite it.",
-		),
 	},
 
 	errorTable: {
@@ -204,12 +198,6 @@ var getInitStatus = rpc.declare({
 var getCronStatus = rpc.declare({
 	object: "luci." + pkg.Name,
 	method: "getCronStatus",
-	params: ["name"],
-});
-
-var getCronEntry = rpc.declare({
-	object: "luci." + pkg.Name,
-	method: "getCronEntry",
 	params: ["name"],
 });
 
@@ -388,16 +376,14 @@ var status = baseclass.extend({
 					],
 				});
 			}
-			var cronSyncNeeded = false;
-			var showCronWarnings =
+			if (
 				reply.status.enabled &&
 				reply.status.running &&
 				(reply.cron.auto_update_enabled ||
-					reply.cron.cron_line_state === "suspended");
-			if (showCronWarnings) {
+					reply.cron.cron_line_state === "suspended")
+			) {
 				var enableCronCmd =
 					"<code>/etc/init.d/cron enable && /etc/init.d/cron start</code>";
-				var resyncLabel = "<code>" + _("Resync Cron") + "</code>";
 				if (!reply.cron.cron_init || !reply.cron.cron_bin) {
 					reply.ubus.warnings.push({
 						code: "warningCronMissing",
@@ -408,37 +394,6 @@ var status = baseclass.extend({
 						code: "warningCronDisabled",
 						info: enableCronCmd,
 					});
-				}
-				if (reply.cron.cron_line_state === "suspended") {
-					reply.ubus.warnings.push({
-						code: "warningCronEntryMismatch",
-						info: resyncLabel,
-					});
-					cronSyncNeeded = true;
-				} else if (
-					reply.cron.auto_update_enabled &&
-					(reply.cron.cron_line_state === "unsupported" ||
-						reply.cron.cron_line_state === "multi")
-				) {
-					reply.ubus.warnings.push({
-						code: "warningCronEntryMismatch",
-						info: resyncLabel,
-					});
-					cronSyncNeeded = true;
-				} else if (reply.cron.auto_update_enabled) {
-					if (!reply.cron.cron_line_present) {
-						reply.ubus.warnings.push({
-							code: "warningCronEntryMissing",
-							info: resyncLabel,
-						});
-						cronSyncNeeded = true;
-					} else if (!reply.cron.cron_line_match) {
-						reply.ubus.warnings.push({
-							code: "warningCronEntryMismatch",
-							info: resyncLabel,
-						});
-						cronSyncNeeded = true;
-					}
 				}
 			}
 			var text = "";
@@ -649,52 +604,6 @@ var status = baseclass.extend({
 				_("Redownload"),
 			);
 
-			var btn_sync_cron = E(
-				"button",
-				{
-					class: "btn cbi-button cbi-button-apply",
-					disabled: true,
-					click: function (ev) {
-						ui.showModal(null, [
-							E("p", { class: "spinning" }, _("Syncing cron schedule")),
-						]);
-						return L.resolveDefault(getCronEntry(pkg.Name), {})
-							.then(function (response) {
-								var entry =
-									(response?.[pkg.Name] && response[pkg.Name].entry) || "";
-								if (!entry) {
-									return Promise.reject(new Error("No cron entry"));
-								}
-								entry = entry.replace(/^\s*#\s*/, "");
-								entry = entry.replace(
-									/adblock-fast-auto-(suspended|disabled)/g,
-									"adblock-fast-auto",
-								);
-								return L.resolveDefault(setCronEntry(pkg.Name, entry), {
-									result: false,
-								});
-							})
-							.then(
-								function (result) {
-									if (!result || result.result === false) {
-										throw new Error("Failed to update cron schedule");
-									}
-									ui.hideModal();
-									location.reload();
-								},
-								function (error) {
-									ui.hideModal();
-									ui.addNotification(
-										null,
-										E("p", {}, _("Failed to sync cron schedule")),
-									);
-								},
-							);
-					},
-				},
-				_("Resync Cron"),
-			);
-
 			var pauseTimeout = reply.status.pause_timeout || "20";
 			var btn_action_pause = E(
 				"button",
@@ -801,10 +710,6 @@ var status = baseclass.extend({
 				btn_enable.disabled = false;
 				btn_disable.disabled = true;
 			}
-			if (cronSyncNeeded) {
-				btn_sync_cron.disabled = false;
-			}
-
 			var buttonsDiv = [];
 			var buttonsTitle = E(
 				"label",
@@ -814,21 +719,16 @@ var status = baseclass.extend({
 			var buttonsTextItems = [
 				btn_start,
 				btn_gap,
-				btn_action_pause,
-				btn_gap,
 				btn_action_dl,
-			];
-			if (cronSyncNeeded) {
-				buttonsTextItems.push(btn_gap, btn_sync_cron);
-			}
-			buttonsTextItems.push(
+				btn_gap,
+				btn_action_pause,
 				btn_gap,
 				btn_stop,
 				btn_gap_long,
 				btn_enable,
 				btn_gap,
 				btn_disable,
-			);
+			];
 			var buttonsText = E("div", {}, buttonsTextItems);
 			var buttonsField = E("div", { class: "cbi-value-field" }, buttonsText);
 			if (reply.status.version) {
@@ -866,7 +766,6 @@ return L.Class.extend({
 	getFileUrlFilesizes: getFileUrlFilesizes,
 	syncCron: syncCron,
 	getCronStatus: getCronStatus,
-	getCronEntry: getCronEntry,
 	setCronEntry: setCronEntry,
 	getPlatformSupport: getPlatformSupport,
 	getServiceInfo: getServiceInfo,
