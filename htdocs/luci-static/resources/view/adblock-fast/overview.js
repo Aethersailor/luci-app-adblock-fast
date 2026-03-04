@@ -383,18 +383,6 @@ return view.extend({
 			);
 			o.depends("dnsmasq_instance_option", "+");
 			o.retain = true;
-			o.renderFrame = function (section_id, in_table, option_index, nodes) {
-				var frame = form.Value.prototype.renderFrame.apply(this, arguments);
-				if (frame && frame.querySelector) {
-					var label = frame.querySelector("label.cbi-value-title");
-					if (label) {
-						var div = E("div", { class: label.className });
-						while (label.firstChild) div.appendChild(label.firstChild);
-						label.parentNode.replaceChild(div, label);
-					}
-				}
-				return frame;
-			};
 		}
 
 		if (reply.platform.smartdns_installed && reply.smartdns) {
@@ -462,18 +450,6 @@ return view.extend({
 			);
 			o.depends("smartdns_instance_option", "+");
 			o.retain = true;
-			o.renderFrame = function (section_id, in_table, option_index, nodes) {
-				var frame = form.Value.prototype.renderFrame.apply(this, arguments);
-				if (frame && frame.querySelector) {
-					var label = frame.querySelector("label.cbi-value-title");
-					if (label) {
-						var div = E("div", { class: label.className });
-						while (label.firstChild) div.appendChild(label.firstChild);
-						label.parentNode.replaceChild(div, label);
-					}
-				}
-				return frame;
-			};
 		}
 		o = s1.taboption(
 			"tab_basic",
