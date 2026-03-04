@@ -402,7 +402,7 @@ var status = baseclass.extend({
 
 			var header = E("h2", {}, _("AdBlock-Fast - Status"));
 			var statusTitle = E(
-				"label",
+				"div",
 				{ class: "cbi-value-title" },
 				_("Service Status"),
 			);
@@ -471,7 +471,7 @@ var status = baseclass.extend({
 				}
 				if (detailsText) {
 					var detailsTitle = E(
-						"label",
+						"div",
 						{ class: "cbi-value-title" },
 						_("Service Details"),
 					);
@@ -502,7 +502,7 @@ var status = baseclass.extend({
 			var warningsDiv = [];
 			if (reply.ubus.warnings && reply.ubus.warnings.length) {
 				var warningsTitle = E(
-					"label",
+					"div",
 					{ class: "cbi-value-title" },
 					_("Service Warnings"),
 				);
@@ -532,7 +532,7 @@ var status = baseclass.extend({
 			var errorsDiv = [];
 			if (reply.ubus.errors && reply.ubus.errors.length) {
 				var errorsTitle = E(
-					"label",
+					"div",
 					{ class: "cbi-value-title" },
 					_("Service Errors"),
 				);
@@ -747,7 +747,7 @@ var status = baseclass.extend({
 			}
 			var buttonsDiv = [];
 			var buttonsTitle = E(
-				"label",
+				"div",
 				{ class: "cbi-value-title" },
 				_("Service Control"),
 			);
