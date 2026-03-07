@@ -187,14 +187,24 @@ return view.extend({
 		// Parse cron entry into virtual config values
 		var cronConfig = this.parseCronEntry(reply.cronEntry);
 
-		var isEnabled = initData.enabled;
 		var status, m, s1, s2, s3, o;
 
 		status = new adb.status();
-		m = new form.Map(pkg.Name, _("AdBlock-Fast - Configuration"));
-		if (!isEnabled) {
-			m.readonly = true;
+
+		if (!initData.enabled) {
+			return status.render().then(function (statusNode) {
+				return E("div", {}, [
+					statusNode,
+					E("div", { class: "cbi-map" }, [
+						E("h2", {}, _("AdBlock-Fast - Configuration")),
+						E("div", { class: "cbi-map-descr" },
+							_("Service is disabled. Please enable the service using the Service Control button above to configure service options.")),
+					]),
+				]);
+			});
 		}
+
+		m = new form.Map(pkg.Name, _("AdBlock-Fast - Configuration"));
 		this._map = m;
 
 		s1 = m.section(form.NamedSection, "config", pkg.Name);
