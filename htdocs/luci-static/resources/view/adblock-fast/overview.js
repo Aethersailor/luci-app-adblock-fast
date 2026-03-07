@@ -187,10 +187,14 @@ return view.extend({
 		// Parse cron entry into virtual config values
 		var cronConfig = this.parseCronEntry(reply.cronEntry);
 
+		var isEnabled = initData.enabled;
 		var status, m, s1, s2, s3, o;
 
 		status = new adb.status();
 		m = new form.Map(pkg.Name, _("AdBlock-Fast - Configuration"));
+		if (!isEnabled) {
+			m.readonly = true;
+		}
 		this._map = m;
 
 		s1 = m.section(form.NamedSection, "config", pkg.Name);
