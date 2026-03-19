@@ -788,10 +788,7 @@ msgid "Thursday"
 msgstr ""
 
 #: applications/luci-app-adblock-fast/htdocs/luci-static/resources/view/adblock-fast/overview.js:812
-msgid ""
-"Token for Chrome extension or other remote API access. Copy this value into "
-"the extension settings as the password. Changing it here will update the API "
-"user password on save."
+msgid "Token for <a href=\""
 msgstr ""
 
 #: applications/luci-app-adblock-fast/htdocs/luci-static/resources/view/adblock-fast/overview.js:585

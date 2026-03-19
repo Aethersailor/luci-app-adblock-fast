@@ -809,7 +809,7 @@ return view.extend({
 			"rpcd_token",
 			_("Remote Access Token"),
 			_(
-				"Token for Chrome extension or other remote API access. " +
+				"Token for <a href=\"" + pkg.URL + "#chrome-extension\" target=\"_blank\">Google Chrome extension</a> or other remote API access. " +
 				"Copy this value into the extension settings as the password. " +
 				"Changing it here will update the API user password on save.",
 			),
