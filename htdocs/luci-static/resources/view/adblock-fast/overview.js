@@ -824,7 +824,7 @@ return view.extend({
 		o.write = function (section_id, formvalue) {
 			var currentValue = L.uci.get(pkg.Name, section_id, "rpcd_token");
 			if (formvalue && formvalue !== currentValue) {
-				RPC.setRpcdToken(pkg.Name, formvalue);
+				adb.setRpcdToken(pkg.Name, formvalue);
 			}
 			return L.uci.set(pkg.Name, section_id, "rpcd_token", formvalue);
 		};
