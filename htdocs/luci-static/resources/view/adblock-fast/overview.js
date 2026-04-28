@@ -13,6 +13,44 @@
 var pkg = adb.pkg;
 
 return view.extend({
+	// Detect the AdBlock-Fast Controller Chrome extension; nag if missing on
+	// browsers that can install Chrome Web Store extensions.
+	maybeNagChromeExtension: function () {
+		var ua = navigator.userAgentData;
+		if (!ua || ua.mobile) return;
+		var supportsChromeStore = ua.brands && ua.brands.some(function (b) {
+			return /^(Google Chrome|Microsoft Edge|Chromium|Brave|Opera|Vivaldi)$/.test(b.brand);
+		});
+		if (!supportsChromeStore) return;
+
+		var detected = false;
+		var listener = function (ev) {
+			if (ev.source !== window) return;
+			var d = ev.data;
+			if (d && typeof d === "object" && d.source === "adblock-fast-extension") {
+				detected = true;
+				window.removeEventListener("message", listener);
+			}
+		};
+		window.addEventListener("message", listener);
+		window.postMessage({ source: "luci-adblock-fast", type: "extension-ping" }, "*");
+
+		setTimeout(function () {
+			window.removeEventListener("message", listener);
+			if (detected) return;
+			ui.addNotification(
+				null,
+				E("p", {},
+					_("Tip: install the %sAdBlock-Fast Controller Chrome extension%s to control this router from your browser toolbar.").format(
+						'<a href="' + pkg.URL + '#chrome-extension" target="_blank">',
+						"</a>"
+					)
+				),
+				"info"
+			);
+		}, 1000);
+	},
+
 	// Helper function to parse cron entry into config values
 	parseCronEntry: function (cronEntry) {
 		var defaults = {
@@ -162,6 +200,8 @@ return view.extend({
 	},
 
 	render: function (data) {
+		this.maybeNagChromeExtension();
+
 		var initData = (data[0] && data[0][pkg.Name]) || {};
 		var reply = {
 			sizes: initData.file_url || [],
