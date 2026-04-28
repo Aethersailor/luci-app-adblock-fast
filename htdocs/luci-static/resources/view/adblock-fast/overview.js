@@ -12,6 +12,9 @@
 
 var pkg = adb.pkg;
 
+// Chrome Web Store ID of the AdBlock-Fast Controller extension.
+var CHROME_EXTENSION_ID = "REPLACE_WITH_CHROME_EXTENSION_ID";
+
 return view.extend({
 	// Detect the AdBlock-Fast Controller Chrome extension; nag if missing on
 	// browsers that can install Chrome Web Store extensions.
@@ -23,21 +26,9 @@ return view.extend({
 		});
 		if (!supportsChromeStore) return;
 
-		var detected = false;
-		var listener = function (ev) {
-			if (ev.source !== window) return;
-			var d = ev.data;
-			if (d && typeof d === "object" && d.source === "adblock-fast-extension") {
-				detected = true;
-				window.removeEventListener("message", listener);
-			}
-		};
-		window.addEventListener("message", listener);
-		window.postMessage({ source: "luci-adblock-fast", type: "extension-ping" }, "*");
-
-		setTimeout(function () {
-			window.removeEventListener("message", listener);
-			if (detected) return;
+		var img = new Image();
+		img.onload = function () { /* extension installed */ };
+		img.onerror = function () {
 			ui.addNotification(
 				null,
 				E("p", {},
@@ -48,7 +39,8 @@ return view.extend({
 				),
 				"info"
 			);
-		}, 1000);
+		};
+		img.src = "chrome-extension://" + CHROME_EXTENSION_ID + "/icons/icon-active-16.png";
 	},
 
 	// Helper function to parse cron entry into config values
