@@ -14,6 +14,9 @@ var pkg = {
 	get LuciCompat() {
 		return 14;
 	},
+	get ChromeExtensionId() {
+		return "klkdabjeohlmbcnidbealmacfjlihopo";
+	},
 	get ReadmeCompat() {
 		return "";
 	},

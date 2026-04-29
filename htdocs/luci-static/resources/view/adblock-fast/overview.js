@@ -12,9 +12,6 @@
 
 var pkg = adb.pkg;
 
-// Chrome Web Store ID of the AdBlock-Fast Controller extension.
-var CHROME_EXTENSION_ID = "REPLACE_WITH_CHROME_EXTENSION_ID";
-
 return view.extend({
 	// Detect the AdBlock-Fast Controller Chrome extension; nag if missing on
 	// browsers that can install Chrome Web Store extensions.
@@ -26,21 +23,24 @@ return view.extend({
 		});
 		if (!supportsChromeStore) return;
 
-		var img = new Image();
-		img.onload = function () { /* extension installed */ };
-		img.onerror = function () {
-			ui.addNotification(
-				null,
-				E("p", {},
-					_("Tip: install the %sAdBlock-Fast Controller Chrome extension%s to control this router from your browser toolbar.").format(
-						'<a href="' + pkg.URL + '#chrome-extension" target="_blank">',
-						"</a>"
-					)
-				),
-				"info"
-			);
-		};
-		img.src = "chrome-extension://" + CHROME_EXTENSION_ID + "/icons/icon-active-16.png";
+		var self = this;
+		fetch("chrome-extension://" + pkg.ChromeExtensionId + "/info.json")
+			.then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+			.then(function (info) {
+				self.chromeExtensionInfo = info;
+			})
+			.catch(function () {
+				ui.addNotification(
+					null,
+					E("p", {},
+						_("Tip: install the %sAdBlock-Fast Controller Chrome extension%s to control this router from your browser toolbar.").format(
+							'<a href="' + pkg.URL + '#chrome-extension" target="_blank">',
+							"</a>"
+						)
+					),
+					"info"
+				);
+			});
 	},
 
 	// Helper function to parse cron entry into config values
