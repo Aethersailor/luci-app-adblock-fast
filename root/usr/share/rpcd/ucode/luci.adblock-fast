@@ -24,7 +24,7 @@ import { readfile, writefile, stat, rename, unlink, chmod, mkdir, access } from 
 import { cursor } from 'uci';
 
 const packageName = 'adblock-fast';
-const rpcdCompat = 14; // ucode-lsp disable
+const rpcdCompat = 15; // ucode-lsp disable
 
 // ── Helpers ─────────────────────────────────────────────────────────
 

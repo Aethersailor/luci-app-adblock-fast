@@ -768,12 +768,12 @@ return view.extend({
 			"parallel_downloads",
 			_("Simultaneous processing"),
 			_(
-				"Launch all lists downloads and processing simultaneously, reducing service start time.",
+				"Maximum number of block lists to download and process at the same time (0 disables). Automatically reduced when free memory is low.",
 			),
 		);
-		o.value("0", _("Do not use simultaneous processing"));
-		o.value("1", _("Use simultaneous processing"));
-		o.default = "1";
+		o.value("0", _("Disabled"));
+		for (var i = 1; i <= 16; i++) o.value(String(i));
+		o.default = "8";
 
 		o = s1.taboption(
 			"tab_advanced",

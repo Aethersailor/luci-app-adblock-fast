@@ -12,7 +12,7 @@ var pkg = {
 		return "adblock-fast";
 	},
 	get LuciCompat() {
-		return 14;
+		return 15;
 	},
 	get ChromeExtensionId() {
 		return "klkdabjeohlmbcnidbealmacfjlihopo";
@@ -110,6 +110,9 @@ var pkg = {
 		warningCronMissing: _(
 			"Cron daemon is not available. If BusyBox crond is present, enable it with: %s; otherwise install another cron daemon.",
 		),
+		warningParallelDownloadsThrottled: _(
+			"Parallel downloads reduced to %s due to low free memory",
+		),
 	},
 
 	errorTable: {
@@ -158,7 +161,7 @@ var pkg = {
 		errorCreatingDirectory: _(
 			"Failed to create output/cache/gzip file directory",
 		),
-		errorDetectingFileType: _("Failed to detect format %s"),
+		errorDetectingFileType: _("Failed to detect format for %s"),
 		errorNothingToDo: _("No blocked list URLs nor blocked-domains enabled"),
 		errorTooLittleRam: _(
 			"Free ram (%s) is not enough to process all enabled block-lists",
