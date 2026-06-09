@@ -728,6 +728,42 @@ return view.extend({
 		o = s1.taboption(
 			"tab_advanced",
 			form.Value,
+			"download_connect_timeout",
+			_("Connect time-out (in seconds)"),
+			_(
+				"Stop the download if the connection cannot be established within this many seconds. Supported by curl and GNU wget only.",
+			),
+		);
+		o.default = "10";
+		o.datatype = "range(1,60)";
+
+		o = s1.taboption(
+			"tab_advanced",
+			form.Value,
+			"download_max_time",
+			_("Maximum download time (in seconds)"),
+			_(
+				"Abort the download if the whole transfer takes longer than this many seconds, even if it is still progressing. Leave empty to disable. Currently implemented for curl only.",
+			),
+		);
+		o.default = "";
+		o.datatype = "uinteger";
+		o.rmempty = true;
+
+		o = s1.taboption(
+			"tab_advanced",
+			form.Flag,
+			"download_allow_insecure",
+			_("Allow insecure downloads"),
+			_(
+				"Skip SSL certificate verification when downloading block-lists. Enabled by default for compatibility with self-signed or otherwise untrusted certificates.",
+			),
+		);
+		o.default = "1";
+
+		o = s1.taboption(
+			"tab_advanced",
+			form.Value,
 			"pause_timeout",
 			_("Pause time-out (in seconds)"),
 			_(
