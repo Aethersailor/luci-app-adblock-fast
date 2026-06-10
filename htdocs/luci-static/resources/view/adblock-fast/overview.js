@@ -136,50 +136,6 @@ return view.extend({
 		return config;
 	},
 
-	// Helper function to generate cron entry from config values
-	generateCronEntry: function (config) {
-		if (config.auto_update_enabled !== "1") {
-			return "";
-		}
-
-		var minute = config.auto_update_minute || "0";
-		var hour,
-			dom = "*",
-			dow = "*";
-
-		switch (config.auto_update_mode) {
-			case "every_n_hours":
-				hour = "*/" + (config.auto_update_every_nhours || "6");
-				break;
-			case "every_n_days":
-				hour = config.auto_update_hour || "4";
-				dom = "*/" + (config.auto_update_every_ndays || "3");
-				break;
-			case "monthly":
-				hour = config.auto_update_hour || "4";
-				dom = config.auto_update_monthday || "1";
-				break;
-			case "weekly":
-				hour = config.auto_update_hour || "4";
-				dow = config.auto_update_weekday || "0";
-				break;
-			default: // daily
-				hour = config.auto_update_hour || "4";
-				break;
-		}
-
-		return (
-			minute +
-			" " +
-			hour +
-			" " +
-			dom +
-			" * " +
-			dow +
-			" /etc/init.d/adblock-fast dl # adblock-fast-auto"
-		);
-	},
-
 	load: function () {
 		return Promise.all([
 			L.resolveDefault(adb.getInitStatus(pkg.Name), {}),
@@ -552,7 +508,9 @@ return view.extend({
 		o.value("0", _("Disable"));
 		o.value("1", _("Enable"));
 		o.default = "0";
-		// Override to use cron data instead of UCI
+		// Virtual field: displayed from parsed cron data and submitted to the
+		// backend via syncCron (see handleSaveApply); never written to UCI.
+		o.write = o.remove = function () {};
 		o.cfgvalue = function (section_id) {
 			return cronConfig.auto_update_enabled;
 		};
@@ -571,7 +529,9 @@ return view.extend({
 		o.value("every_n_hours", _("Every N hours"));
 		o.default = "daily";
 		o.depends("auto_update_enabled", "1");
-		// Override to use cron data instead of UCI
+		// Virtual field: displayed from parsed cron data and submitted to the
+		// backend via syncCron (see handleSaveApply); never written to UCI.
+		o.write = o.remove = function () {};
 		o.cfgvalue = function (section_id) {
 			return cronConfig.auto_update_mode;
 		};
@@ -588,7 +548,9 @@ return view.extend({
 		}
 		o.default = "3";
 		o.depends({ auto_update_enabled: "1", auto_update_mode: "every_n_days" });
-		// Override to use cron data instead of UCI
+		// Virtual field: displayed from parsed cron data and submitted to the
+		// backend via syncCron (see handleSaveApply); never written to UCI.
+		o.write = o.remove = function () {};
 		o.cfgvalue = function (section_id) {
 			return cronConfig.auto_update_every_ndays;
 		};
@@ -605,7 +567,9 @@ return view.extend({
 		}
 		o.default = "6";
 		o.depends({ auto_update_enabled: "1", auto_update_mode: "every_n_hours" });
-		// Override to use cron data instead of UCI
+		// Virtual field: displayed from parsed cron data and submitted to the
+		// backend via syncCron (see handleSaveApply); never written to UCI.
+		o.write = o.remove = function () {};
 		o.cfgvalue = function (section_id) {
 			return cronConfig.auto_update_every_nhours;
 		};
@@ -626,7 +590,9 @@ return view.extend({
 		o.value("6", _("Saturday"));
 		o.default = "0";
 		o.depends({ auto_update_enabled: "1", auto_update_mode: "weekly" });
-		// Override to use cron data instead of UCI
+		// Virtual field: displayed from parsed cron data and submitted to the
+		// backend via syncCron (see handleSaveApply); never written to UCI.
+		o.write = o.remove = function () {};
 		o.cfgvalue = function (section_id) {
 			return cronConfig.auto_update_weekday;
 		};
@@ -643,7 +609,9 @@ return view.extend({
 		}
 		o.default = "1";
 		o.depends({ auto_update_enabled: "1", auto_update_mode: "monthly" });
-		// Override to use cron data instead of UCI
+		// Virtual field: displayed from parsed cron data and submitted to the
+		// backend via syncCron (see handleSaveApply); never written to UCI.
+		o.write = o.remove = function () {};
 		o.cfgvalue = function (section_id) {
 			return cronConfig.auto_update_monthday;
 		};
@@ -664,7 +632,9 @@ return view.extend({
 		o.depends({ auto_update_enabled: "1", auto_update_mode: "weekly" });
 		o.depends({ auto_update_enabled: "1", auto_update_mode: "monthly" });
 		o.depends({ auto_update_enabled: "1", auto_update_mode: "every_n_days" });
-		// Override to use cron data instead of UCI
+		// Virtual field: displayed from parsed cron data and submitted to the
+		// backend via syncCron (see handleSaveApply); never written to UCI.
+		o.write = o.remove = function () {};
 		o.cfgvalue = function (section_id) {
 			return cronConfig.auto_update_hour;
 		};
@@ -684,7 +654,9 @@ return view.extend({
 		}
 		o.default = "0";
 		o.depends("auto_update_enabled", "1");
-		// Override to use cron data instead of UCI
+		// Virtual field: displayed from parsed cron data and submitted to the
+		// backend via syncCron (see handleSaveApply); never written to UCI.
+		o.write = o.remove = function () {};
 		o.cfgvalue = function (section_id) {
 			return cronConfig.auto_update_minute;
 		};
@@ -1144,67 +1116,51 @@ return view.extend({
 		});
 	},
 
-	handleSave: function (ev) {
-		var map = this._map;
-		if (!map) {
-			return this.super("handleSave", [ev]);
-		}
+	// The schedule (auto_update_*) is NOT stored in UCI — the crontab is its
+	// sole source of truth. On apply we collect the schedule from the form and
+	// send it as discrete, server-validated fields to syncCron, which renders
+	// the crontab. No cron-line string is built in the browser, and no schedule
+	// write touches UCI (so a schedule change never triggers an adbf reload).
 
-		// Collect virtual scheduling values
-		var schedulingConfig = {};
-		var schedulingFields = [
-			"auto_update_enabled",
-			"auto_update_mode",
-			"auto_update_hour",
-			"auto_update_minute",
-			"auto_update_weekday",
-			"auto_update_monthday",
-			"auto_update_every_ndays",
-			"auto_update_every_nhours",
-		];
-
-		schedulingFields.forEach(function (fieldName) {
-			var match = map.lookupOption(fieldName, "config");
-			if (match && match[0].isValid("config")) {
-				schedulingConfig[fieldName] = match[0].formvalue("config");
-			}
+	collectSchedule: function (map) {
+		var schedule = {};
+		[
+			"auto_update_enabled", "auto_update_mode",
+			"auto_update_hour", "auto_update_minute",
+			"auto_update_weekday", "auto_update_monthday",
+			"auto_update_every_ndays", "auto_update_every_nhours",
+		].forEach(function (field) {
+			var opt = map ? map.lookupOption(field, "config") : null;
+			// Hidden (mode-irrelevant) fields return null and are omitted; the
+			// backend supplies its matching defaults for those.
+			var val = opt && opt[0] ? opt[0].formvalue("config") : null;
+			if (val != null && val !== "")
+				schedule[field] = val;
 		});
-
-		// Generate cron entry from config
-		var cronEntry = this.generateCronEntry(schedulingConfig);
-
-		// Save cron entry directly
-		var savePromise = L.resolveDefault(adb.setCronEntry(pkg.Name, cronEntry), {
-			result: false,
-		}).then(function (result) {
-			if (!result || result.result === false) {
-				ui.addNotification(
-					null,
-					E("p", {}, _("Failed to update cron schedule.")),
-				);
-				return Promise.reject(new Error("Failed to update cron schedule"));
-			}
-
-			// Remove scheduling values from UCI before saving
-			schedulingFields.forEach(function (fieldName) {
-				var match = map.lookupOption(fieldName, "config");
-				if (match) {
-					match[0].remove("config");
-				}
-			});
-
-			// Save the rest of UCI config
-			return Promise.resolve();
-		});
-
-		return savePromise.then(() => {
-			return this.super("handleSave", [ev]);
-		});
+		// The backend treats auto_update_enabled as the marker of an explicit
+		// schedule update, so always include it.
+		if (schedule.auto_update_enabled == null)
+			schedule.auto_update_enabled = "0";
+		return schedule;
 	},
 
 	handleSaveApply: function (ev, mode) {
-		return this.handleSave(ev).then(function () {
-			return ui.changes.apply(mode == "0");
-		});
+		var self = this, map = this._map;
+		return this.handleSave(ev)
+			.then(function () {
+				return ui.changes.apply(mode == "0");
+			})
+			.then(function () {
+				return L.resolveDefault(
+					adb.syncCron(pkg.Name, null, self.collectSchedule(map)),
+					false,
+				).then(function (result) {
+					if (result === false)
+						ui.addNotification(
+							null,
+							E("p", {}, _("Failed to update cron schedule.")),
+						);
+				});
+			});
 	},
 });

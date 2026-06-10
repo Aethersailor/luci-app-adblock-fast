@@ -12,7 +12,7 @@ var pkg = {
 		return "adblock-fast";
 	},
 	get LuciCompat() {
-		return 16;
+		return 17;
 	},
 	get ChromeExtensionId() {
 		return "klkdabjeohlmbcnidbealmacfjlihopo";
@@ -185,12 +185,30 @@ var getFileUrlFilesizes = rpc.declare({
 	params: ["name", "url"],
 });
 
-var syncCron = rpc.declare({
+var _syncCron = rpc.declare({
 	object: "luci." + pkg.Name,
 	method: "syncCron",
-	params: ["name", "action"],
+	params: [
+		"name", "action",
+		"auto_update_enabled", "auto_update_mode", "auto_update_minute",
+		"auto_update_hour", "auto_update_weekday", "auto_update_monthday",
+		"auto_update_every_ndays", "auto_update_every_nhours",
+	],
 	expect: { result: false },
 });
+
+// syncCron(name, action, schedule?) — the schedule object's auto_update_*
+// fields are passed as discrete, server-validated args (no cron-line string,
+// no UCI write). Omit schedule for a state-only change (preserves existing).
+function syncCron(name, action, schedule) {
+	var s = schedule || {};
+	return _syncCron(
+		name, action,
+		s.auto_update_enabled, s.auto_update_mode, s.auto_update_minute,
+		s.auto_update_hour, s.auto_update_weekday, s.auto_update_monthday,
+		s.auto_update_every_ndays, s.auto_update_every_nhours,
+	);
+}
 
 var getInitList = rpc.declare({
 	object: "luci." + pkg.Name,
@@ -208,13 +226,6 @@ var getCronStatus = rpc.declare({
 	object: "luci." + pkg.Name,
 	method: "getCronStatus",
 	params: ["name"],
-});
-
-var setCronEntry = rpc.declare({
-	object: "luci." + pkg.Name,
-	method: "setCronEntry",
-	params: ["name", "entry"],
-	expect: { result: false },
 });
 
 var getPlatformSupport = rpc.declare({
@@ -840,7 +851,6 @@ return L.Class.extend({
 	getFileUrlFilesizes: getFileUrlFilesizes,
 	syncCron: syncCron,
 	getCronStatus: getCronStatus,
-	setCronEntry: setCronEntry,
 	getPlatformSupport: getPlatformSupport,
 	getServiceInfo: getServiceInfo,
 	getQueryLogStatus: getQueryLogStatus,
