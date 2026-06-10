@@ -251,6 +251,12 @@ msgstr ""
 msgid "Do not store compressed cache"
 msgstr ""
 
+#: applications/luci-app-adblock-fast/htdocs/luci-static/resources/adblock-fast/status.js:117
+msgid ""
+"Download of '%s' timed out; the server may be too slow — consider increasing "
+"download_timeout, download_connect_timeout or download_max_time"
+msgstr ""
+
 #: applications/luci-app-adblock-fast/htdocs/luci-static/resources/view/adblock-fast/overview.js:722
 msgid "Download time-out (in seconds)"
 msgstr ""
