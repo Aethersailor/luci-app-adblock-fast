@@ -12,7 +12,7 @@ var pkg = {
 		return "adblock-fast";
 	},
 	get LuciCompat() {
-		return 15;
+		return 16;
 	},
 	get ChromeExtensionId() {
 		return "klkdabjeohlmbcnidbealmacfjlihopo";
@@ -112,6 +112,9 @@ var pkg = {
 		),
 		warningParallelDownloadsThrottled: _(
 			"Parallel downloads reduced to %s due to low free memory",
+		),
+		warningDownloadTimeout: _(
+			"Download of '%s' timed out; the server may be too slow — consider increasing download_timeout, download_connect_timeout or download_max_time",
 		),
 	},
 
