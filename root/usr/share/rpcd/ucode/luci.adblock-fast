@@ -409,6 +409,15 @@ const methods = {
 			const INIT_ACTIONS = { enable: 1, disable: 1, start: 1, stop: 1,
 				reload: 1, restart: 1, dl: 1, pause: 1 };
 			if (!INIT_ACTIONS[action]) return { result: false };
+			// dl/start/reload/restart download and process every block-list
+			// synchronously inside the init script, and 'pause' additionally
+			// sleeps for pause_timeout. rpcd is single-threaded, so running any
+			// of these under a blocking system() ties it up — and freezes every
+			// LuCI page — until the operation finishes (issue #9). Detach these
+			// so the RPC returns immediately; the UI polls getInitStatus for
+			// progress. 'stop' is quick and stays synchronous so the UI reflects
+			// the stopped state right away.
+			const BG_INIT_ACTIONS = { start: 1, reload: 1, restart: 1, dl: 1, pause: 1 };
 			if (!access('/etc/init.d/' + packageName, 'x'))
 				return { error: 'Init script not found!' };
 
@@ -427,8 +436,16 @@ const methods = {
 				break;
 			}
 			case 'start': case 'stop': case 'reload': case 'restart': case 'dl': case 'pause':
-				if (system(sprintf("/etc/init.d/%s %s >/dev/null 2>&1", packageName, action)) == 0)
+				if (BG_INIT_ACTIONS[action]) {
+					// Fire-and-forget: sh backgrounds the job and exits, so
+					// system() returns at once and the job is reparented to init
+					// and runs to completion. Report success optimistically — the
+					// UI tracks the real outcome by polling getInitStatus.
+					system(sprintf("/etc/init.d/%s %s >/dev/null 2>&1 &", packageName, action));
 					result = true;
+				} else if (system(sprintf("/etc/init.d/%s %s >/dev/null 2>&1", packageName, action)) == 0) {
+					result = true;
+				}
 				break;
 			}
 
