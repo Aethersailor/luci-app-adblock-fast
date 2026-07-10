@@ -32,10 +32,7 @@
 		},
 		"write": {
 			"uci": [
-				"adblock-fast",
-				"dhcp",
-				"smartdns",
-				"unbound"
+				"adblock-fast"
 			],
 			"ubus": {
 				"luci.adblock-fast": [
